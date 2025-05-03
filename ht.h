@@ -38,7 +38,7 @@ struct LinearProber : public Prober<KeyType> {
         if( this -> m_ == this -> numProbes_) {
             return this->npos; 
         }
-        HASH_INDEX_T loc = (this->start_ + this->numProbes_) % this->m_;
+        HASH_INDEX_T loc = (this->start_ + (this->numProbes_)) % this->m_;
         this->numProbes_++;
         return loc;
     }
@@ -106,7 +106,7 @@ public:
         {
             return this -> npos;
         }
-        HASH_INDEX_T x = this -> start_ + (dhstep_ * (this -> numProbes_)) % (this -> m_);
+        HASH_INDEX_T x = (this->start_ + dhstep_ * this->numProbes_) % this->m_;
         this -> numProbes_++;
         
         return x;
@@ -275,7 +275,7 @@ private:
     HASH_INDEX_T mIndex_;  // index to CAPACITIES
 
     // ADD MORE DATA MEMBERS HERE, AS NECESSARY
-    int size_; int inside; double changeSize;
+    int size_; int filled_; double alpha_;
 
 };
 
@@ -296,10 +296,10 @@ const HASH_INDEX_T HashTable<K,V,Prober,Hash,KEqual>::CAPACITIES[] =
 template<typename K, typename V, typename Prober, typename Hash, typename KEqual>
 HashTable<K,V,Prober,Hash,KEqual>::HashTable(
     double resizeAlpha, const Prober& prober, const Hasher& hash, const KEqual& kequal)
-       :  hash_(hash), kequal_(kequal), prober_(prober)
+       :  hash_(hash), kequal_(kequal), prober_(prober), alpha_(resizeAlpha)
 {
     // Initialize any other data members as necessary
-    size_ = 0; inside = 0; mIndex_ = 0; table_.resize(CAPACITIES[mIndex_], nullptr);
+    size_ = 0; filled_ = 0; mIndex_ = 0; table_.resize(CAPACITIES[mIndex_], nullptr);
 }
 
 // To be completed
@@ -335,8 +335,8 @@ size_t HashTable<K,V,Prober,Hash,KEqual>::size() const
 template<typename K, typename V, typename Prober, typename Hash, typename KEqual>
 void HashTable<K,V,Prober,Hash,KEqual>::insert(const ItemType& p)
 {
-    double loadFactor = static_cast<double>(inside) / CAPACITIES[mIndex_];
-    if(loadFactor >= this->changeSize) {
+    double loadFactor = static_cast<double>(filled_) / CAPACITIES[mIndex_];
+    if(loadFactor >= this->alpha_) {
         this->resize();
     }
 
@@ -348,7 +348,7 @@ void HashTable<K,V,Prober,Hash,KEqual>::insert(const ItemType& p)
     if(table_[index] == nullptr) {
         table_[index] = new HashItem(p);
         ++size_;
-        ++inside;
+        ++filled_;
     }
     else if(table_[index]->deleted) {
         table_[index]->item = p;
@@ -367,7 +367,8 @@ template<typename K, typename V, typename Prober, typename Hash, typename KEqual
 void HashTable<K,V,Prober,Hash,KEqual>::remove(const KeyType& key)
 {
     HASH_INDEX_T index = this -> probe(key);
-    if(table_[index]->deleted || index == npos || table_[index] == nullptr) {
+    if(index == npos || table_[index] == nullptr || table_[index]->deleted)
+    {
         return;
     }
 
@@ -446,13 +447,15 @@ typename HashTable<K,V,Prober,Hash,KEqual>::HashItem* HashTable<K,V,Prober,Hash,
 template<typename K, typename V, typename Prober, typename Hash, typename KEqual>
 void HashTable<K,V,Prober,Hash,KEqual>::resize()
 {
-
+    if(mIndex_ + 1 >= sizeof(CAPACITIES) / sizeof(HASH_INDEX_T)) {
+        return; 
+    }
     mIndex_++;
     HASH_INDEX_T newSize = CAPACITIES[mIndex_];
     std::vector<HashItem*> newTable(newSize, nullptr);
 
     std::vector<HashItem*> oldTable = table_;
-    table_ = newTable; inside = 0; size_ = 0;
+    table_ = newTable; filled_ = 0; size_ = 0;
 
     for(size_t i = 0; i < oldTable.size(); ++i) {
         if(oldTable[i] != nullptr && !oldTable[i]->deleted) {
