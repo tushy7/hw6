@@ -16,54 +16,49 @@ struct MyStringHash {
             generateRValues();
         }
     }
-    // hash function entry point (i.e. this is h(k))
     HASH_INDEX_T operator()(const std::string& k) const
     {
-        // Add your code here
-        unsigned long long rValues[5];
         unsigned long long w[5] = {0, 0, 0, 0, 0};
-        std::string cleaned;
+        std::string lower;
         for(unsigned int i = 0; i < k.size(); ++i){
             if(k[i] >= 'A' && k[i] <= 'Z'){
-                cleaned += k[i] + 32;
+                lower += k[i] + 32;
             }
             else{
-                cleaned += k[i];
+                lower += k[i];
             }
         }
 
-        int currentIndex = 4;
-        int position = cleaned.size() - 1;
-        while(position >= 0 && currentIndex >= 0){
-            unsigned long long value = 0;
-            unsigned long long multiplier = 1;
+        int inFours = 4;
+        int i = lower.size() - 1;
+        while(i >= 0 && inFours >= 0){
+            unsigned long long curr = 0;
+            unsigned long long base = 1;
             int count = 0;
-
-            while(count < 6 && position >= 0){
-                char ch = cleaned[position];
-                int num = 0;
-                if(ch >= 'a' && ch <= 'z'){
-                    num = ch - 'a';
+            while(count < 6 && i >= 0){
+                int val = 0;
+                if(lower[i] >= 'a' && lower[i] <= 'z'){
+                    val = lower[i] - 'a';
                 }
-                else if(ch >= '0' && ch <= '9'){
-                    num = ch - '0' + 26;
+                else if(lower[i] >= '0' && lower[i] <= '9'){
+                    val = lower[i] - '0' + 26;
                 }
-                value += num * multiplier;
-                multiplier *= 36;
-                --position;
+                curr += val * base;
+                base *= 36;
+                --i;
                 ++count;
             }
-
-            w[currentIndex] = value;
-            --currentIndex;
+            w[inFours] = curr;
+            --inFours;
         }
 
-        HASH_INDEX_T finalHash = 0;
-        for(int i = 0; i < 5; ++i){
-            finalHash += rValues[i] * w[i];
+        HASH_INDEX_T final = 0;
+        for(int i = 0; i < 5; ++i)
+        {
+            final += rValues[i] * w[i];
         }
-        return finalHash;
-    }
+        return final;    
+}
 
 
 
