@@ -336,8 +336,8 @@ template<typename K, typename V, typename Prober, typename Hash, typename KEqual
 void HashTable<K,V,Prober,Hash,KEqual>::insert(const ItemType& p)
 {
     double loadFactor = static_cast<double>(inside) / CAPACITIES[mIndex_];
-    if(loadFactor >= changeSize) {
-        this -> resize();
+    if(loadFactor >= this->changeSize) {
+        this->resize();
     }
 
     HASH_INDEX_T index = probe(p.first);
@@ -347,18 +347,19 @@ void HashTable<K,V,Prober,Hash,KEqual>::insert(const ItemType& p)
 
     if(table_[index] == nullptr) {
         table_[index] = new HashItem(p);
-        size_++;
-        inside++;
+        ++size_;
+        ++inside;
     }
     else if(table_[index]->deleted) {
         table_[index]->item = p;
         table_[index]->deleted = false;
-        size_++;
+        ++size_;
     }
     else {
         table_[index]->item.second = p.second;
     }
 }
+
 
 
 // To be completed
