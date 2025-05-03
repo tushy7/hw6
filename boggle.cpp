@@ -95,5 +95,52 @@ bool boggleHelper(const std::set<std::string>& dict, const std::set<std::string>
 								   std::string word, std::set<std::string>& result, unsigned int r, unsigned int c, int dr, int dc)
 {
 //add your solution here!
+//if it's earshot it returns true, but earshots is false
+
+
+	if (r >= board.size() || c >= board[0].size()) //this part is correct fs 
+	{
+		if(dict.find(word) != dict.end()) //check if the word is in the dictionary
+		{
+			result.insert(word);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+    }
+
+    word += board[r][c];
+
+	bool isWord = false; //first check if it's a prefix, if not, check if the current word needs to be added, if not then just return false
+
+	if (dict.find(word) != dict.end()) //check if the new added letter creates a word or not
+	{
+		isWord = true;
+		
+		if (prefix.find(word) == prefix.end()) //this is the largest the word will get
+		{
+			result.insert(word);
+			return true;
+		}
+	}
+
+	
+	if (boggleHelper(dict, prefix, board, word, result, r+dr, c+dc, dr, dc))
+	{
+		return true;
+	}
+
+	else
+	{
+		if(isWord) 
+		{
+			result.insert(word);
+			return true;
+		}
+		return false;
+	}
 
 }
+
